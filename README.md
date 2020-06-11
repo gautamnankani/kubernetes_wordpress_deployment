@@ -8,4 +8,4 @@ use command:
 
 **kubectl create -k .**
 
-To browse:   <node-ip>:30000
+To browse:   node-ip:30000
