@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-pvc
+  labels:
+    env: test
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-service
+  labels:
+    env: test
+spec:
+  selector:
+    env: test
+  type: ClusterIP
+  ports:
+  - port: 3306
+    targetPort: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-dep
+  labels:
+    env: test
+spec:
+  selector:
+    matchLabels: 
+      env: test
+  template:
+    metadata:
+      name: db-pod
+      labels:
+        env: test
+    spec:
+      containers:
+      - name: db-con
+        image: mysql:5.7
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sec
+              key: rootpass
+        - name: MYSQL_DATABASE
+          value: lwdb
+        - name: MYSQL_USER
+          value: redhat
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sec
+              key: userpass
+        ports:
+        - containerPort: 3306
+          name: db-port
+        volumeMounts:
+        - name: mypvc
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mypvc
+        persistentVolumeClaim:
+          claimName: db-pvc       
+        
+

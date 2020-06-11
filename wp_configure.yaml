@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wp-pvc
+  labels:
+    env: test
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wp-service
+  labels:
+    env: test
+spec:
+  selector:
+    env: test
+  type: NodePort
+  ports:
+  - nodePort: 30000
+    port: 80
+    targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wp-dep
+  labels:
+    env: test
+spec:
+  selector:
+    matchLabels: 
+      env: test
+  template:
+    metadata:
+      name: wp-pod
+      labels:
+        env: test
+    spec:
+      containers:
+      - name: wp-con
+        image: wordpress:5.1.1-php7.3-apache
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: db-service
+        - name: WORDPRESS_DB_NAME
+          value: lwdb
+        - name: WORDPRESS_DB_USER
+          value: redhat
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sec
+              key: userpass
+        ports:
+        - containerPort: 80
+          name: wp-port
+        volumeMounts:
+        - name: mypvc
+          mountPath: /var/www/html
+      volumes:
+      - name: mypvc
+        persistentVolumeClaim:
+          claimName: wp-pvc       
+        
+
